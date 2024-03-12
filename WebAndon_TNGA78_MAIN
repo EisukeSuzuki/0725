@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>TNGA78_MAIN</title>
+<style type="text/css">
+    body {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        height: 100vh; /* 画面の高さいっぱいに広げる */
+    }
+
+    iframe {
+        width: 100%;
+        height: 100%;
+        border: 1px solid #CCC;
+    }
+</style>
+
+</head>
+<body>
+
+<iframe src="http://172.23.79.185:4000/gridWebAndon/revoAssembly_M1_M2"></iframe>
+<iframe src="https://apps.powerapps.com/play/e/9272c745-df9b-e8c4-a3ca-9147bf7719bc/a/44580165-e7af-4952-87f7-a38e6794c5c3?tenantId=d1c1335e-f582-42a9-b6fe-5e1a16eb9bc8&hint=98b00ebc-8f09-44b9-b0cc-c350d4da7985&sourcetime=1697110869100&source=portal"></iframe>
+
+</body>
+</html>
