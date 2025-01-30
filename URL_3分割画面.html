@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL_3分割画面</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* 親コンテナ */
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* 左側の8割 */
+        .left {
+            width: 80%;
+            height: 100%;
+            background-color: #f4f4f4;
+        }
+
+        /* 右側の2割 */
+        .right {
+            width: 20%;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        /* 右側の上部 */
+        .right-top {
+            flex: 1;
+            background-color: #c4c4c4;
+        }
+
+        /* 右側の下部 */
+        .right-bottom {
+            flex: 1;
+            background-color: #a4a4a4;
+        }
+
+        /* iframeをフルスクリーンで表示 */
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- 左側のコンテンツ (80%) -->
+        <div class="left">
+            <iframe src="https://miepita.com/partner/leo%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE/" title="Left URL"></iframe>
+        </div>
+
+        <!-- 右側のコンテンツ (20%) -->
+        <div class="right">
+            <!-- 右側の上部 -->
+            <div class="right-top">
+                <iframe src="https://miepita.com/partner/leo%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE/" title="Right Top URL"></iframe>
+            </div>
+
+            <!-- 右側の下部 -->
+            <div class="right-bottom">
+                <iframe src="https://miepita.com/partner/leo%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE/" title="Right Bottom URL"></iframe>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
