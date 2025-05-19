@@ -1,0 +1,15 @@
+# @Ver1 V3.7_R01
+# @Date1 24/03/24 12:29
+#
+# @Ver2 V3.7_R01
+# @Date2 24/03/15 19:28 [File Read]
+#
+PRJ{
+	File=KAT-4054.nprj;
+}
+PLC 1{
+	File=KAT-4054Plc1.prja;
+}
+PRJTYPE{
+  1;
+}
