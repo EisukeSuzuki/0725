@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>My Game</title>
+  <style>
+    body {
+      margin: 0;
+      background: black;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+      margin: auto;
+      background: #111;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="game"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+// プレイヤー
+let y = canvas.height / 2;
+
+// ボール
+let bx = 100, by = 100;
+let vx = 5, vy = 4;
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // プレイヤー
+  ctx.fillStyle = "white";
+  ctx.fillRect(30, y, 10, 100);
+
+  // ボール
+  ctx.beginPath();
+  ctx.arc(bx, by, 10, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 動き
+  bx += vx;
+  by += vy;
+
+  if (by < 0 || by > canvas.height) vy *= -1;
+
+  requestAnimationFrame(draw);
+}
+
+draw();
+
+// スマホタッチ操作
+window.addEventListener("touchmove", e => {
+  y = e.touches[0].clientY;
+});
+</script>
+
+</body>
+</html>
