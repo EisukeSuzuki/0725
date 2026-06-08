@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>TABLE PONG BLOCK</title>
+<title>TABLE PONG</title>
 
 <style>
 html, body {
@@ -12,8 +12,10 @@ html, body {
   overflow: hidden;
   background: black;
   touch-action: none;
+  height: 100%;
 }
 
+/* 中央スケール */
 #wrap {
   position: absolute;
   top: 50%;
@@ -21,11 +23,7 @@ html, body {
   transform-origin: center;
 }
 
-canvas {
-  background: #111;
-  display: block;
-}
-
+/* メニュー */
 #menu {
   position: absolute;
   width: 100%;
@@ -37,11 +35,18 @@ canvas {
   justify-content: center;
   align-items: center;
   z-index: 10;
+  text-align: center;
 }
 
 button {
-  font-size: 20px;
+  font-size: 18px;
   padding: 10px 18px;
+  margin-top: 10px;
+}
+
+canvas {
+  background: #111;
+  display: block;
 }
 </style>
 </head>
@@ -50,6 +55,7 @@ button {
 
 <div id="menu">
   <h1>TABLE PONG BLOCK</h1>
+  <p>v1.0</p>
   <button onclick="start()">START</button>
 </div>
 
@@ -61,18 +67,21 @@ button {
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
+// ======================
+// 基本サイズ（固定台）
 const W = 1000;
 const H = 600;
 
 canvas.width = W;
 canvas.height = H;
 
-// 画面縮小
+// ======================
+// 横画面最適スケール（見切れ防止）
 function resize(){
   const scale = Math.min(
     window.innerWidth / W,
     window.innerHeight / H
-  ) * 0.75;
+  ) * 0.75; // 余白込み
 
   document.getElementById("wrap").style.transform =
     `translate(-50%, -50%) scale(${scale})`;
@@ -81,20 +90,18 @@ window.addEventListener("resize", resize);
 resize();
 
 // ======================
-// 🔷 ブロックサイズ化
-// ======================
+// ラケット（修正）
+// 太さ2倍 / 高さ3/4
+const PADDLE_W = 24;   // ←2倍化
+const PADDLE_H = 105;  // ←3/4くらい
 
-// ラケット2倍（ブロック）
-const PADDLE_W = 20;
-const PADDLE_H = 140;
-
-// ボール2倍（ブロック）
-const BALL_SIZE = 22;
+// ボール（ブロック）
+const BALL_SIZE = 20;
 
 // ======================
 
-let left = { x: 30, y: 230 };
-let right = { x: W - 50, y: 230 };
+let left = { x: 30, y: 250 };
+let right = { x: W - 54, y: 250 };
 
 let ball = { x: 0, y: 0, vx: 9, vy: 5 };
 
@@ -104,7 +111,8 @@ let scoreR = 0;
 let running = false;
 let touchY = null;
 
-// サーブ
+// ======================
+// サーブ（ラケット発射）
 function serve(side){
 
   if(side === "left"){
@@ -120,28 +128,34 @@ function serve(side){
   ball.vy = (Math.random()*6 - 3);
 }
 
+// ======================
 // スタート
 function start(){
   document.getElementById("menu").style.display = "none";
+
   scoreL = 0;
   scoreR = 0;
   running = true;
+
   serve("left");
 }
 
+// ======================
 // CPU
 function cpu(){
   let target = ball.y - PADDLE_H/2;
   right.y += (target - right.y) * 0.09;
 }
 
-// 角度反射（ブロック対応）
+// ======================
+// 角度反射
 function hit(paddle){
   let hit = (ball.y - paddle.y) / PADDLE_H;
   ball.vy = (hit - 0.5) * 12;
   ball.vx *= 1.05;
 }
 
+// ======================
 // 更新
 function update(){
 
@@ -153,6 +167,7 @@ function update(){
 
   cpu();
 
+  // 画面内制限（見切れ防止）
   left.y = Math.max(10, Math.min(H-PADDLE_H-10, left.y));
   right.y = Math.max(10, Math.min(H-PADDLE_H-10, right.y));
 
@@ -160,12 +175,12 @@ function update(){
   ball.x += ball.vx;
   ball.y += ball.vy;
 
-  // 壁
+  // 上下壁
   if(ball.y < 20 || ball.y > H-20){
     ball.vy *= -1;
   }
 
-  // 左当たり（ブロック判定）
+  // 左当たり
   if(
     ball.x < left.x + PADDLE_W &&
     ball.y > left.y &&
@@ -188,26 +203,16 @@ function update(){
   // 得点
   if(ball.x < 0){
     scoreR++;
-    if(scoreR >= 10) win("RIGHT");
     serve("right");
   }
 
   if(ball.x > W){
     scoreL++;
-    if(scoreL >= 10) win("LEFT");
     serve("left");
   }
 }
 
-// 勝利
-function win(w){
-  running = false;
-  document.getElementById("menu").innerHTML =
-    `<h1>${w} WIN!</h1>
-     <button onclick="location.reload()">RESTART</button>`;
-  document.getElementById("menu").style.display = "flex";
-}
-
+// ======================
 // 描画
 function draw(){
 
@@ -238,6 +243,7 @@ function draw(){
   ctx.fillText(scoreR, W*3/4, 50);
 }
 
+// ======================
 // ループ
 function loop(){
   update();
@@ -246,7 +252,8 @@ function loop(){
 }
 loop();
 
-// タッチ
+// ======================
+// タッチ操作
 window.addEventListener("touchmove", e=>{
   touchY = e.touches[0].clientY;
 });
