@@ -2,19 +2,24 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>TABLE PONG</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>TABLE PONG FINAL</title>
 
 <style>
 body {
   margin: 0;
-  background: #0f0f0f;
+  background: black;
   overflow: hidden;
   touch-action: none;
+  font-family: sans-serif;
+}
+
+canvas {
+  display: block;
 }
 
 /* スタート画面 */
-#startScreen {
+#menu {
   position: absolute;
   width: 100%;
   height: 100%;
@@ -24,9 +29,233 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  font-size: 30px;
 }
 
 button {
   font-size: 20px;
-  padding: 10
+  padding: 12px 20px;
+  margin-top: 10px;
+}
+
+#controls {
+  position: absolute;
+  bottom: 10px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.ctrl {
+  width: 40%;
+  display: flex;
+  justify-content: space-around;
+  pointer-events: auto;
+}
+
+.btn {
+  background: white;
+  color: black;
+  padding: 15px;
+  border-radius: 10px;
+  user-select: none;
+}
+</style>
+</head>
+
+<body>
+
+<div id="menu">
+  <h1>TABLE PONG</h1>
+  <button onclick="startGame()">START</button>
+</div>
+
+<canvas id="game"></canvas>
+
+<div id="controls">
+  <div class="ctrl">
+    <div class="btn" onmousedown="lpUp=true" onmouseup="lpUp=false">↑</div>
+    <div class="btn" onmousedown="lpDown=true" onmouseup="lpDown=false">↓</div>
+  </div>
+
+  <div class="ctrl">
+    <div class="btn" onmousedown="smash('left')">SMASH</div>
+  </div>
+
+  <div class="ctrl">
+    <div class="btn" onmousedown="rpUp=true" onmouseup="rpUp=false">↑</div>
+    <div class="btn" onmousedown="rpDown=true" onmouseup="rpDown=false">↓</div>
+  </div>
+</div>
+
+<audio id="bgm" loop>
+  <source src="https://cdn.pixabay.com/audio/2022/10/16/audio_12b6b0c1f2.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let gameRunning = false;
+
+// パドル
+const PADDLE_W = 15;
+const PADDLE_H = 120;
+const SPEED = 7;
+
+let left = { x: 30, y: 200 };
+let right = { x: canvas.width - 45, y: 200 };
+
+// ボール
+let ball = { x: 0, y: 0, vx: 0, vy: 0, r: 12 };
+
+// スコア
+let scoreL = 0;
+let scoreR = 0;
+
+// サーブ保持
+let serveSide = "left";
+
+// スマホ操作
+let lpUp=false, lpDown=false, rpUp=false, rpDown=false;
+
+// 音
+const bgm = document.getElementById("bgm");
+
+function startGame(){
+  document.getElementById("menu").style.display = "none";
+  bgm.volume = 0.4;
+  bgm.play();
+
+  resetBall(serveSide);
+  gameRunning = true;
+}
+
+function resetBall(side){
+  ball.x = canvas.width/2;
+  ball.y = canvas.height/2;
+
+  let dir = (side === "left") ? 1 : -1;
+
+  ball.vx = 6 * dir;
+  ball.vy = (Math.random()*6 - 3);
+}
+
+function smash(side){
+  if(side === "left") ball.vx *= 1.8;
+  if(side === "right") ball.vx *= 1.8;
+}
+
+// 更新
+function update(){
+
+  // 左
+  if(lpUp) left.y -= SPEED;
+  if(lpDown) left.y += SPEED;
+
+  // 右
+  if(rpUp) right.y -= SPEED;
+  if(rpDown) right.y += SPEED;
+
+  // W/S（PC）
+  document.onkeydown = (e)=>{
+    if(e.key === "w") left.y -= SPEED;
+    if(e.key === "s") left.y += SPEED;
+    if(e.key === "ArrowUp") right.y -= SPEED;
+    if(e.key === "ArrowDown") right.y += SPEED;
+  };
+
+  // 制限
+  left.y = Math.max(0, Math.min(canvas.height-PADDLE_H, left.y));
+  right.y = Math.max(0, Math.min(canvas.height-PADDLE_H, right.y));
+
+  // ボール
+  ball.x += ball.vx;
+  ball.y += ball.vy;
+
+  // 壁
+  if(ball.y < 0 || ball.y > canvas.height) ball.vy *= -1;
+
+  // 当たり判定
+  if(ball.x < left.x + PADDLE_W &&
+     ball.y > left.y &&
+     ball.y < left.y + PADDLE_H){
+    ball.vx *= -1;
+  }
+
+  if(ball.x > right.x &&
+     ball.y > right.y &&
+     ball.y < right.y + PADDLE_H){
+    ball.vx *= -1;
+  }
+
+  // 得点
+  if(ball.x < 0){
+    scoreR++;
+    serveSide = "right";
+    checkWin();
+    resetBall(serveSide);
+  }
+
+  if(ball.x > canvas.width){
+    scoreL++;
+    serveSide = "left";
+    checkWin();
+    resetBall(serveSide);
+  }
+}
+
+function checkWin(){
+  if(scoreL >= 10 || scoreR >= 10){
+    gameRunning = false;
+    document.getElementById("menu").style.display = "flex";
+    document.getElementById("menu").innerHTML =
+      `<h1>${scoreL > scoreR ? "LEFT WIN" : "RIGHT WIN"}</h1>
+       <button onclick="location.reload()">RESTART</button>`;
+  }
+}
+
+// 描画
+function draw(){
+
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // 中央線
+  ctx.fillStyle = "#333";
+  for(let y=0;y<canvas.height;y+=30){
+    ctx.fillRect(canvas.width/2, y, 2, 15);
+  }
+
+  // パドル
+  ctx.fillStyle = "white";
+  ctx.fillRect(left.x,left.y,PADDLE_W,PADDLE_H);
+  ctx.fillRect(right.x,right.y,PADDLE_W,PADDLE_H);
+
+  // ボール
+  ctx.beginPath();
+  ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);
+  ctx.fill();
+
+  // スコア
+  ctx.font = "40px Arial";
+  ctx.fillText(scoreL, canvas.width/4, 50);
+  ctx.fillText(scoreR, canvas.width*3/4, 50);
+}
+
+// ループ
+function loop(){
+  if(gameRunning){
+    update();
+    draw();
+  }
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+
+</body>
+</html>
