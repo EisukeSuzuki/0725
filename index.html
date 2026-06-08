@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>TABLE PONG FINAL</title>
+<title>TABLE PONG CPU</title>
 
 <style>
 body {
@@ -11,14 +11,13 @@ body {
   background: black;
   overflow: hidden;
   touch-action: none;
-  font-family: sans-serif;
 }
 
 canvas {
   display: block;
 }
 
-/* スタート画面 */
+/* スタート */
 #menu {
   position: absolute;
   width: 100%;
@@ -33,32 +32,7 @@ canvas {
 
 button {
   font-size: 20px;
-  padding: 12px 20px;
-  margin-top: 10px;
-}
-
-#controls {
-  position: absolute;
-  bottom: 10px;
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  pointer-events: none;
-}
-
-.ctrl {
-  width: 40%;
-  display: flex;
-  justify-content: space-around;
-  pointer-events: auto;
-}
-
-.btn {
-  background: white;
-  color: black;
-  padding: 15px;
-  border-radius: 10px;
-  user-select: none;
+  padding: 10px 20px;
 }
 </style>
 </head>
@@ -67,154 +41,144 @@ button {
 
 <div id="menu">
   <h1>TABLE PONG</h1>
-  <button onclick="startGame()">START</button>
+  <button onclick="start()">START</button>
 </div>
 
 <canvas id="game"></canvas>
-
-<div id="controls">
-  <div class="ctrl">
-    <div class="btn" onmousedown="lpUp=true" onmouseup="lpUp=false">↑</div>
-    <div class="btn" onmousedown="lpDown=true" onmouseup="lpDown=false">↓</div>
-  </div>
-
-  <div class="ctrl">
-    <div class="btn" onmousedown="smash('left')">SMASH</div>
-  </div>
-
-  <div class="ctrl">
-    <div class="btn" onmousedown="rpUp=true" onmouseup="rpUp=false">↑</div>
-    <div class="btn" onmousedown="rpDown=true" onmouseup="rpDown=false">↓</div>
-  </div>
-</div>
-
-<audio id="bgm" loop>
-  <source src="https://cdn.pixabay.com/audio/2022/10/16/audio_12b6b0c1f2.mp3" type="audio/mpeg">
-</audio>
 
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+function resize(){
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener("resize", resize);
 
-let gameRunning = false;
+// パドル（少し小さく）
+const PADDLE_W = 12;
+const PADDLE_H = 90;
+const SPEED = 8;
 
-// パドル
-const PADDLE_W = 15;
-const PADDLE_H = 120;
-const SPEED = 7;
+// プレイヤー（左）
+let left = {
+  x: 30,
+  y: 200,
+  vy: 0
+};
 
-let left = { x: 30, y: 200 };
-let right = { x: canvas.width - 45, y: 200 };
+// CPU（右）
+let right = {
+  x: () => canvas.width - 42,
+  y: 200
+};
 
 // ボール
-let ball = { x: 0, y: 0, vx: 0, vy: 0, r: 12 };
+let ball = {
+  x: 0,
+  y: 0,
+  vx: 0,
+  vy: 0,
+  r: 10
+};
 
-// スコア
 let scoreL = 0;
 let scoreR = 0;
 
-// サーブ保持
-let serveSide = "left";
+let game = false;
+let lastHitBy = "left";
 
-// スマホ操作
-let lpUp=false, lpDown=false, rpUp=false, rpDown=false;
+// タッチ
+let touchY = null;
 
-// 音
-const bgm = document.getElementById("bgm");
-
-function startGame(){
+function start(){
   document.getElementById("menu").style.display = "none";
-  bgm.volume = 0.4;
-  bgm.play();
-
-  resetBall(serveSide);
-  gameRunning = true;
+  game = true;
+  serve("left"); // 左から開始
 }
 
-function resetBall(side){
-  ball.x = canvas.width/2;
-  ball.y = canvas.height/2;
+// サーブ（ラケット位置から出す）
+function serve(side){
+  if(side === "left"){
+    ball.x = left.x + PADDLE_W + 5;
+    ball.y = left.y + PADDLE_H/2;
+    ball.vx = 6;
+  } else {
+    ball.x = canvas.width - 45;
+    ball.y = right.y + PADDLE_H/2;
+    ball.vx = -6;
+  }
 
-  let dir = (side === "left") ? 1 : -1;
-
-  ball.vx = 6 * dir;
-  ball.vy = (Math.random()*6 - 3);
+  ball.vy = (Math.random()*4 - 2);
 }
 
-function smash(side){
-  if(side === "left") ball.vx *= 1.8;
-  if(side === "right") ball.vx *= 1.8;
+// CPU
+function cpu(){
+  let target = ball.y - PADDLE_H/2;
+  right.y += (target - right.y) * 0.08;
 }
 
 // 更新
 function update(){
 
-  // 左
-  if(lpUp) left.y -= SPEED;
-  if(lpDown) left.y += SPEED;
+  // タッチ or マウス
+  if(touchY !== null){
+    left.y = touchY - PADDLE_H/2;
+  }
 
-  // 右
-  if(rpUp) right.y -= SPEED;
-  if(rpDown) right.y += SPEED;
-
-  // W/S（PC）
-  document.onkeydown = (e)=>{
-    if(e.key === "w") left.y -= SPEED;
-    if(e.key === "s") left.y += SPEED;
-    if(e.key === "ArrowUp") right.y -= SPEED;
-    if(e.key === "ArrowDown") right.y += SPEED;
-  };
+  // CPU動き
+  cpu();
 
   // 制限
-  left.y = Math.max(0, Math.min(canvas.height-PADDLE_H, left.y));
-  right.y = Math.max(0, Math.min(canvas.height-PADDLE_H, right.y));
+  left.y = Math.max(0, Math.min(canvas.height - PADDLE_H, left.y));
+  right.y = Math.max(0, Math.min(canvas.height - PADDLE_H, right.y));
 
-  // ボール
+  // ボール移動
   ball.x += ball.vx;
   ball.y += ball.vy;
 
-  // 壁
-  if(ball.y < 0 || ball.y > canvas.height) ball.vy *= -1;
-
-  // 当たり判定
-  if(ball.x < left.x + PADDLE_W &&
-     ball.y > left.y &&
-     ball.y < left.y + PADDLE_H){
-    ball.vx *= -1;
+  // 壁反射
+  if(ball.y < 0 || ball.y > canvas.height){
+    ball.vy *= -1;
   }
 
-  if(ball.x > right.x &&
-     ball.y > right.y &&
-     ball.y < right.y + PADDLE_H){
+  // 左ラケット当たり
+  if(
+    ball.x < left.x + PADDLE_W &&
+    ball.y > left.y &&
+    ball.y < left.y + PADDLE_H
+  ){
     ball.vx *= -1;
+
+    // 🔥 スマッシュ代わり：移動中なら強化
+    if(Math.abs(left.vy) > 2){
+      ball.vx *= 1.4;
+    }
+
+    lastHitBy = "left";
+  }
+
+  // 右ラケット当たり
+  if(
+    ball.x > canvas.width - 42 &&
+    ball.y > right.y &&
+    ball.y < right.y + PADDLE_H
+  ){
+    ball.vx *= -1;
+    lastHitBy = "right";
   }
 
   // 得点
   if(ball.x < 0){
     scoreR++;
-    serveSide = "right";
-    checkWin();
-    resetBall(serveSide);
+    serve("right"); // 取った方サーブ
   }
 
   if(ball.x > canvas.width){
     scoreL++;
-    serveSide = "left";
-    checkWin();
-    resetBall(serveSide);
-  }
-}
-
-function checkWin(){
-  if(scoreL >= 10 || scoreR >= 10){
-    gameRunning = false;
-    document.getElementById("menu").style.display = "flex";
-    document.getElementById("menu").innerHTML =
-      `<h1>${scoreL > scoreR ? "LEFT WIN" : "RIGHT WIN"}</h1>
-       <button onclick="location.reload()">RESTART</button>`;
+    serve("left");
   }
 }
 
@@ -225,14 +189,14 @@ function draw(){
 
   // 中央線
   ctx.fillStyle = "#333";
-  for(let y=0;y<canvas.height;y+=30){
+  for(let y=0;y<canvas.height;y+=25){
     ctx.fillRect(canvas.width/2, y, 2, 15);
   }
 
   // パドル
   ctx.fillStyle = "white";
   ctx.fillRect(left.x,left.y,PADDLE_W,PADDLE_H);
-  ctx.fillRect(right.x,right.y,PADDLE_W,PADDLE_H);
+  ctx.fillRect(canvas.width-42,right.y,PADDLE_W,PADDLE_H);
 
   // ボール
   ctx.beginPath();
@@ -247,7 +211,7 @@ function draw(){
 
 // ループ
 function loop(){
-  if(gameRunning){
+  if(game){
     update();
     draw();
   }
@@ -255,6 +219,15 @@ function loop(){
 }
 
 loop();
+
+// タッチ操作
+canvas.addEventListener("touchmove", (e)=>{
+  touchY = e.touches[0].clientY;
+});
+
+canvas.addEventListener("mousemove", (e)=>{
+  touchY = e.clientY;
+});
 </script>
 
 </body>
