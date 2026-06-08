@@ -3,46 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>TABLE PONG CPU</title>
+<title>TABLE PONG FINAL</title>
 
 <style>
-body {
+html, body {
   margin: 0;
+  padding: 0;
+  overflow: hidden;   /* ←スクロール完全禁止 */
   background: black;
-  overflow: hidden;
   touch-action: none;
 }
 
 canvas {
   display: block;
 }
-
-/* スタート */
-#menu {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  background: black;
-  color: white;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-button {
-  font-size: 20px;
-  padding: 10px 20px;
-}
 </style>
 </head>
 
 <body>
-
-<div id="menu">
-  <h1>TABLE PONG</h1>
-  <button onclick="start()">START</button>
-</div>
 
 <canvas id="game"></canvas>
 
@@ -57,30 +35,30 @@ function resize(){
 resize();
 window.addEventListener("resize", resize);
 
-// パドル（少し小さく）
+// 🎮 ラケット（3/4サイズ）
 const PADDLE_W = 12;
-const PADDLE_H = 90;
-const SPEED = 8;
+const PADDLE_H = 70; // ←小さくした
 
-// プレイヤー（左）
+const SPEED = 10;
+
+// 左プレイヤー
 let left = {
   x: 30,
-  y: 200,
-  vy: 0
-};
-
-// CPU（右）
-let right = {
-  x: () => canvas.width - 42,
   y: 200
 };
 
-// ボール
+// 右CPU
+let right = {
+  x: 0,
+  y: 200
+};
+
+// ⚡ ボール（速度UP）
 let ball = {
   x: 0,
   y: 0,
-  vx: 0,
-  vy: 0,
+  vx: 9,   // ←速くした
+  vy: 5,
   r: 10
 };
 
@@ -88,54 +66,58 @@ let scoreL = 0;
 let scoreR = 0;
 
 let game = false;
-let lastHitBy = "left";
 
 // タッチ
 let touchY = null;
 
-function start(){
-  document.getElementById("menu").style.display = "none";
-  game = true;
-  serve("left"); // 左から開始
-}
-
-// サーブ（ラケット位置から出す）
+// 🎯 サーブ
 function serve(side){
+
   if(side === "left"){
     ball.x = left.x + PADDLE_W + 5;
     ball.y = left.y + PADDLE_H/2;
-    ball.vx = 6;
+    ball.vx = 9;
   } else {
     ball.x = canvas.width - 45;
     ball.y = right.y + PADDLE_H/2;
-    ball.vx = -6;
+    ball.vx = -9;
   }
 
-  ball.vy = (Math.random()*4 - 2);
+  ball.vy = (Math.random()*6 - 3);
 }
 
 // CPU
 function cpu(){
   let target = ball.y - PADDLE_H/2;
-  right.y += (target - right.y) * 0.08;
+  right.y += (target - right.y) * 0.09;
+}
+
+// 角度計算（重要）
+function hitAngle(paddle){
+  let hit = (ball.y - paddle.y) / PADDLE_H;
+
+  // -0.5〜+0.5くらいに調整
+  ball.vy = (hit - 0.5) * 10;
+
+  // 少しスピード加速
+  ball.vx *= 1.05;
 }
 
 // 更新
 function update(){
 
-  // タッチ or マウス
+  // プレイヤー操作
   if(touchY !== null){
     left.y = touchY - PADDLE_H/2;
   }
 
-  // CPU動き
   cpu();
 
   // 制限
-  left.y = Math.max(0, Math.min(canvas.height - PADDLE_H, left.y));
-  right.y = Math.max(0, Math.min(canvas.height - PADDLE_H, right.y));
+  left.y = Math.max(0, Math.min(canvas.height-PADDLE_H, left.y));
+  right.y = Math.max(0, Math.min(canvas.height-PADDLE_H, right.y));
 
-  // ボール移動
+  // ボール
   ball.x += ball.vx;
   ball.y += ball.vy;
 
@@ -144,36 +126,32 @@ function update(){
     ball.vy *= -1;
   }
 
-  // 左ラケット当たり
+  // 左ラケット
   if(
     ball.x < left.x + PADDLE_W &&
     ball.y > left.y &&
     ball.y < left.y + PADDLE_H
   ){
-    ball.vx *= -1;
+    ball.vx = Math.abs(ball.vx);
 
-    // 🔥 スマッシュ代わり：移動中なら強化
-    if(Math.abs(left.vy) > 2){
-      ball.vx *= 1.4;
-    }
-
-    lastHitBy = "left";
+    hitAngle(left); // ←角度反射
   }
 
-  // 右ラケット当たり
+  // 右ラケット
   if(
     ball.x > canvas.width - 42 &&
     ball.y > right.y &&
     ball.y < right.y + PADDLE_H
   ){
-    ball.vx *= -1;
-    lastHitBy = "right";
+    ball.vx = -Math.abs(ball.vx);
+
+    hitAngle(right);
   }
 
   // 得点
   if(ball.x < 0){
     scoreR++;
-    serve("right"); // 取った方サーブ
+    serve("right"); // ←サーブ復活
   }
 
   if(ball.x > canvas.width){
@@ -193,7 +171,7 @@ function draw(){
     ctx.fillRect(canvas.width/2, y, 2, 15);
   }
 
-  // パドル
+  // ラケット
   ctx.fillStyle = "white";
   ctx.fillRect(left.x,left.y,PADDLE_W,PADDLE_H);
   ctx.fillRect(canvas.width-42,right.y,PADDLE_W,PADDLE_H);
@@ -221,13 +199,13 @@ function loop(){
 loop();
 
 // タッチ操作
-canvas.addEventListener("touchmove", (e)=>{
+window.addEventListener("touchmove", (e)=>{
   touchY = e.touches[0].clientY;
 });
 
-canvas.addEventListener("mousemove", (e)=>{
-  touchY = e.clientY;
-});
+// 起動
+game = true;
+serve("left"); // 最初もサーブ
 </script>
 
 </body>
