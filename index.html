@@ -2,179 +2,31 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>TABLE PONG</title>
+
 <style>
 body {
   margin: 0;
   background: #0f0f0f;
   overflow: hidden;
+  touch-action: none;
 }
 
-canvas {
-  display: block;
-  margin: auto;
-  background: #111;
-}
-</style>
-</head>
-<body>
-
-<canvas id="game"></canvas>
-
-<script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-// パドル
-const paddleW = 20;
-const paddleH = 120;
-
-let left = {
-  x: 40,
-  y: canvas.height/2 - paddleH/2
-};
-
-let right = {
-  x: canvas.width - 60,
-  y: canvas.height/2 - paddleH/2
-};
-
-// ボール
-let ball = {
-  x: canvas.width/2,
-  y: canvas.height/2,
-  vx: 6,
-  vy: 4,
-  size: 18
-};
-
-// スコア
-let leftScore = 0;
-let rightScore = 0;
-
-// タッチ操作用
-let touchY = null;
-
-// CPU強さ
-const aiSpeed = 5;
-
-// 描画
-function drawRect(x,y,w,h){
-  ctx.fillRect(x,y,w,h);
+/* スタート画面 */
+#startScreen {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: black;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-size: 30px;
 }
 
-function resetBall(){
-  ball.x = canvas.width/2;
-  ball.y = canvas.height/2;
-
-  ball.vx = (Math.random() > 0.5 ? 6 : -6);
-  ball.vy = (Math.random() > 0.5 ? 4 : -4);
-}
-
-function update(){
-
-  // 左パドル（スマホ操作）
-  if(touchY !== null){
-    left.y = touchY - paddleH/2;
-  }
-
-  // 右パドル（CPU）
-  if(right.y + paddleH/2 < ball.y){
-    right.y += aiSpeed;
-  } else {
-    right.y -= aiSpeed;
-  }
-
-  // 制限
-  left.y = Math.max(0, Math.min(canvas.height - paddleH, left.y));
-  right.y = Math.max(0, Math.min(canvas.height - paddleH, right.y));
-
-  // ボール移動
-  ball.x += ball.vx;
-  ball.y += ball.vy;
-
-  // 上下反射
-  if(ball.y <= 0 || ball.y >= canvas.height){
-    ball.vy *= -1;
-  }
-
-  // パドル当たり判定
-  if(
-    ball.x < left.x + paddleW &&
-    ball.y > left.y &&
-    ball.y < left.y + paddleH
-  ){
-    ball.vx *= -1;
-  }
-
-  if(
-    ball.x > right.x - paddleW &&
-    ball.y > right.y &&
-    ball.y < right.y + paddleH
-  ){
-    ball.vx *= -1;
-  }
-
-  // 得点
-  if(ball.x < 0){
-    rightScore++;
-    resetBall();
-  }
-
-  if(ball.x > canvas.width){
-    leftScore++;
-    resetBall();
-  }
-}
-
-function draw(){
-
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  // センターライン
-  ctx.fillStyle = "#333";
-  for(let y=0;y<canvas.height;y+=30){
-    ctx.fillRect(canvas.width/2-2, y, 4, 15);
-  }
-
-  // パドル
-  ctx.fillStyle = "white";
-  ctx.fillRect(left.x,left.y,paddleW,paddleH);
-  ctx.fillRect(right.x,right.y,paddleW,paddleH);
-
-  // ボール
-  ctx.beginPath();
-  ctx.arc(ball.x,ball.y,ball.size,0,Math.PI*2);
-  ctx.fill();
-
-  // スコア
-  ctx.font = "50px Arial";
-  ctx.fillText(leftScore, canvas.width/4, 60);
-  ctx.fillText(rightScore, canvas.width*3/4, 60);
-}
-
-function loop(){
-  update();
-  draw();
-  requestAnimationFrame(loop);
-}
-
-loop();
-
-// スマホタッチ操作
-canvas.addEventListener("touchmove", (e)=>{
-  touchY = e.touches[0].clientY;
-});
-
-// PC用（保険）
-canvas.addEventListener("mousemove", (e)=>{
-  touchY = e.clientY;
-});
-
-</script>
-
-</body>
-</html>
+button {
+  font-size: 20px;
+  padding: 10
